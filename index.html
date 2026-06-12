@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>PhysicsPro | Физика курсы платформасы</title>
+    <!-- MathJax -->
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script" async></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            color: #f1f5f9;
+        }
+
+        /* Аутентификация модалы */
+        .auth-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+        }
+        .auth-card {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            padding: 2rem;
+            border-radius: 2rem;
+            width: 90%;
+            max-width: 420px;
+            border: 1px solid #334155;
+            box-shadow: 0 25px 50px -12px black;
+        }
+        .auth-card h2 {
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: #38bdf8;
+        }
+        .auth-card input {
+            width: 100%;
+            padding: 0.8rem;
+            margin: 0.6rem 0;
+            border: none;
+            border-radius: 1rem;
+            background: #334155;
+            color: white;
+            font-size: 1rem;
+        }
+        .auth-card button {
+            width: 100%;
+            padding: 0.8rem;
+            margin-top: 0.8rem;
+            background: #3b82f6;
+            border: none;
+            border-radius: 2rem;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .auth-card button:hover { background: #2563eb; transform: scale(0.98);}
+        .auth-switch {
+            text-align: center;
+            margin-top: 1rem;
+            color: #94a3b8;
+            cursor: pointer;
+        }
+        .auth-switch span { color: #38bdf8; text-decoration: underline; }
+
+        /* негізгі сайт (алғаш жасырын) */
+        .main-app {
+            display: none;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        /* header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            background: #1e293bcc;
+            backdrop-filter: blur(12px);
+            padding: 1rem 2rem;
+            border-radius: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid #334155;
+        }
+        .logo h1 { font-size: 1.8rem; background: linear-gradient(135deg,#38bdf8,#a855f7); -webkit-background-clip:text; background-clip:text; color:transparent;}
+        .user-info { display: flex; gap: 1rem; align-items: center;}
+        .logout-btn { background:#ef4444; padding:0.5rem 1.2rem; border-radius:2rem; border:none; color:white; cursor:pointer;}
+        
+        /* екі баған: модульдер (сол) + оң жақ мазмұн */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 1.5rem;
+        }
+        /* сол жақ модульдер тізімі */
+        .modules-sidebar {
+            background: #1e293b;
+            border-radius: 1.5rem;
+            padding: 1.2rem;
+            height: fit-content;
+            position: sticky;
+            top: 1rem;
+            border: 1px solid #334155;
+        }
+        .modules-sidebar h3 { margin-bottom: 1rem; color:#7dd3fc;}
+        .module-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem;
+            margin: 0.5rem 0;
+            background: #0f172a;
+            border-radius: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .module-item.active-module {
+            border-left-color: #3b82f6;
+            background: #2d3a52;
+            transform: scale(1.01);
+        }
+        .module-item:hover { background: #334155; }
+        .module-name { font-weight: 500; }
+        .module-progress { font-size: 0.8rem; color: #86efac; }
+        .global-progress {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #334155;
+        }
+        .progress-bar {
+            background: #0f172a;
+            border-radius: 1rem;
+            height: 10px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+        .progress-fill {
+            background: linear-gradient(90deg,#3b82f6,#a855f7);
+            width: 0%;
+            height: 100%;
+            transition: width 0.3s;
+        }
+        /* оң жақ контент */
+        .content-area {
+            background: #1e293b;
+            border-radius: 1.5rem;
+            padding: 1.8rem;
+            border: 1px solid #334155;
+        }
+        .topic-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        .topic-card {
+            background: #0f172a;
+            border-radius: 1.2rem;
+            padding: 1.2rem;
+            transition: 0.2s;
+        }
+        .topic-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .topic-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #b9e0ff;
+        }
+        .complete-check {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            accent-color: #22c55e;
+        }
+        .topic-content {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #334155;
+            line-height: 1.6;
+        }
+        .topic-content.open { display: block; }
+        .formula-box {
+            background: #020617;
+            padding: 0.8rem;
+            border-radius: 1rem;
+            margin: 0.8rem 0;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+        .test-quick {
+            background: #2d3a52;
+            padding: 0.8rem;
+            border-radius: 1rem;
+            margin-top: 0.8rem;
+        }
+        .test-quick button {
+            background: #3b82f6;
+            border: none;
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            color:white;
+            cursor:pointer;
+        }
+        .formulas-gallery {
+            margin-top: 2rem;
+            background: #0f172a;
+            border-radius: 1.2rem;
+            padding: 1rem;
+        }
+        .formulas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px,1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .formula-card {
+            background:#1e293b;
+            padding:0.8rem;
+            border-radius:1rem;
+            text-align:center;
+        }
+        @media (max-width: 800px) {
+            .dashboard { grid-template-columns: 1fr; }
+            .modules-sidebar { position: static; }
+        }
+        footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding: 1rem;
+            color:#64748b;
+        }
+        button { cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<!-- Аутентификация модалы -->
+<div id="authModal" class="auth-modal">
+    <div class="auth-card">
+        <h2 id="authTitle">🔐 Кіру</h2>
+        <input type="text" id="authUsername" placeholder="Пайдаланушы аты">
+        <input type="password" id="authPassword" placeholder="Құпия сөз">
+        <button id="authSubmitBtn">Кіру</button>
+        <div class="auth-switch" id="switchToRegister">Аккаунтыңыз жоқ па? <span>Тіркелу</span></div>
+        <div id="authMsg" style="margin-top:0.8rem;color:#f97316; font-size:0.85rem;"></div>
+    </div>
+</div>
+
+<!-- Негізгі қолданба -->
+<div class="main-app" id="mainApp">
+    <div class="header">
+        <div class="logo"><h1>⚛️ PhysicsPro | Физика курсы</h1></div>
+        <div class="user-info">
+            <span>👤 <span id="currentUser">Азамат</span></span>
+            <button class="logout-btn" id="logoutBtn">Шығу</button>
+        </div>
+    </div>
+    
+    <div class="dashboard">
+        <!-- Модульдер сол жақ -->
+        <div class="modules-sidebar">
+            <h3>📚 Модульдер</h3>
+            <div id="modulesList"></div>
+            <div class="global-progress">
+                <p>📊 Жалпы прогрес</p>
+                <div class="progress-bar"><div class="progress-fill" id="globalFill"></div></div>
+                <span id="globalPercent">0%</span>
+            </div>
+            <div class="global-progress">
+                <p>🧮 <strong>Калькулятор</strong></p>
+                <input type="text" id="calcInput" placeholder="өрнек (мысалы: 12*5) " style="width:100%; background:#0f172a; border:1px solid #334155; padding:0.5rem; border-radius:1rem; color:white;">
+                <button id="calcBtn" style="margin-top:0.5rem; width:100%; background:#3b82f6;">=</button>
+                <div id="calcResult" style="margin-top:0.5rem; font-size:0.9rem;"></div>
+            </div>
+        </div>
+
+        <!-- Оң жақ: Тақырыптар мен формулалар -->
+        <div class="content-area">
+            <div id="moduleTitle" style="font-size:1.8rem; margin-bottom:0.5rem;">Механика</div>
+            <p id="moduleDesc">Қозғалыс заңдары, күш, масса және үдеу.</p>
+            <div id="topicsContainer" class="topic-list"></div>
+            
+            <!-- Бөлек формулалар жинағы -->
+            <div class="formulas-gallery">
+                <h3>📖 Формулалар жинағы (барлық модульдер бойынша)</h3>
+                <div class="formulas-grid" id="allFormulasGrid"></div>
+            </div>
+        </div>
+    </div>
+    <footer>PhysicsPro – 7-9 сынып физикасы. Әр сабақты «өтті» деп белгілеңіз, прогресіңіз сақталады. 📐</footer>
+</div>
+
+<script>
+    // ---------- Физика МОДУЛЬДЕРІ (7 модуль, әрқайсысында тақырыптар) ----------
+    const modulesData = {
+        "Механика": {
+            desc: "Денелердің қозғалысы және олардың әсерлесуі.",
+            topics: [
+                { name: "Материялық нүкте. Санақ жүйесі", theory: "Механикада дененің өлшемін ескермеуге болатын жағдайда оны материялық нүкте деп қарастырамыз. Санақ жүйесі – дене, санақ денесі және уақыт жиынтығы.", formulas: ["\(x = x_0 + v t\)"] },
+                { name: "Ньютон заңдары", theory: "1-заң: инерция заңы. 2-заң: \(F=ma\). 3-заң: күштер тең әрі қарама-қарсы.", formulas: ["\( \vec{F} = m\vec{a}\)", "\(F_{12} = -F_{21}\)"] },
+                { name: "Бүкіләлемдік тартылыс заңы", theory: "Екі дене бір-бірін массаларының көбейтіндісіне тура пропорционал, арақашықтықтың квадратына кері пропорционал күшпен тартады.", formulas: ["\( F = G \frac{m_1 m_2}{r^2} \), \( G = 6.67 \cdot 10^{-11} \)"] }
+            ]
+        },
+        "Кинематика": {
+            desc: "Қозғалыстың геометриялық сипаттамасы.",
+            topics: [
+                { name: "Түзусызықты бірқалыпты қозғалыс", theory: "Жылдамдық тұрақты. Орын ауыстыру: \(S = vt\)", formulas: ["\( v = \frac{S}{t} \)"] },
+                { name: "Бірқалыпты үдемелі қозғалыс", theory: "Үдеу тұрақты. Жылдамдық \(v = v_0 + at\), орын ауыстыру \(S = v_0 t + \frac{at^2}{2}\).", formulas: ["\( a = \frac{v-v_0}{t} \)", "\( S = \frac{v^2 - v_0^2}{2a} \)"] }
+            ]
+        },
+        "Молекулалық физика": {
+            desc: "Заттың құрылысы, молекулалар.",
+            topics: [
+                { name: "Молекулалардың броундық қозғалысы", theory: "Сұйықтағы ұсақ бөлшектердің молекулалар әсерінен бейберекет қозғалысы.", formulas: ["\( E_k = \frac{3}{2}kT \)"] },
+                { name: "Идеал газ күйінің теңдеуі", theory: "Қысым, көлем және температура байланысы", formulas: ["\( pV = \nu RT \)"] }
+            ]
+        },
+        "Термодинамика": {
+            desc: "Жылу құбылыстары.",
+            topics: [
+                { name: "Ішкі энергия", theory: "Дененің молекулаларының кинетикалық және потенциалдық энергиясы.", formulas: ["\( \Delta U = Q - A \)"] },
+                { name: "Жылу мөлшері", theory: "Қыздыру кезінде энергия беріледі.", formulas: ["\( Q = mc\Delta T \)"] }
+            ]
+        },
+        "Электр және магнетизм": {
+            desc: "Электр тогы, магнит өрісі.",
+            topics: [
+                { name: "Ом заңы", theory: "Тізбек бөлігіндегі ток күші кернеуге тура пропорционал.", formulas: ["\( I = \frac{U}{R} \)", "\( R = \rho \frac{l}{S} \)"] },
+                { name: "Магнит өрісі", theory: "Токты өткізгіш айналасында магнит өрісі пайда болады.", formulas: ["\( F = BIl \sin\alpha \)"] }
+            ]
+        },
+        "Оптика": {
+            desc: "Жарық құбылыстары.",
+            topics: [
+                { name: "Жарықтың шағылуы", theory: "Түсу бұрышы шағылу бұрышына тең.", formulas: ["\( \alpha = \beta \)"] },
+                { name: "Линза формуласы", theory: "Линзаның оптикалық күші.", formulas: ["\( \frac{1}{F} = \frac{1}{d} + \frac{1}{f} \)"] }
+            ]
+        },
+        "Квантық физика": {
+            desc: "Микроәлем физикасы.",
+            topics: [
+                { name: "Фотоэффект", theory: "Жарық әсерінен металдан электрондар ұшуы.", formulas: ["\( E = h\nu \)", "\( h = 6.63\cdot10^{-34} \)"] },
+                { name: "Комптон эффектісі", theory: "Фотонның электронмен серпімді соқтығысуы.", formulas: ["\( \Delta\lambda = \frac{h}{m_e c}(1-\cos\theta) \)"] }
+            ]
+        }
+    };
+
+    // Барлық формулаларды жинау
+    let allFormulasList = [];
+    for(let mod in modulesData){
+        modulesData[mod].topics.forEach(topic => {
+            if(topic.formulas) topic.formulas.forEach(f => allFormulasList.push({ module: mod, topic: topic.name, formula: f }));
+        });
+    }
+
+    // ---------- LocalStorage-мен жұмыс (пайдаланушылар, прогресс) ----------
+    let users = JSON.parse(localStorage.getItem("physics_users")) || [];
+    let currentUser = null;
+
+    function saveUsers(){ localStorage.setItem("physics_users", JSON.stringify(users)); }
+
+    // прогресс құрылымы: { username: { "Механика": ["Материялық нүкте. Санақ жүйесі", ...] } }
+    function getUserProgress(username){
+        let user = users.find(u=>u.username === username);
+        if(!user) return {};
+        if(!user.progress) user.progress = {};
+        return user.progress;
+    }
+    function updateUserProgress(username, moduleName, topicName, isCompleted){
+        let user = users.find(u=>u.username === username);
+        if(!user) return;
+        if(!user.progress) user.progress = {};
+        if(!user.progress[moduleName]) user.progress[moduleName] = [];
+        if(isCompleted){
+            if(!user.progress[moduleName].includes(topicName)) user.progress[moduleName].push(topicName);
+        } else {
+            user.progress[moduleName] = user.progress[moduleName].filter(t => t !== topicName);
+        }
+        saveUsers();
+        renderModulesSidebar();
+        renderTopics(currentModule);
+        updateGlobalProgress();
+    }
+    function isTopicCompleted(username, moduleName, topicName){
+        let prog = getUserProgress(username);
+        return prog[moduleName] ? prog[moduleName].includes(topicName) : false;
+    }
+    function moduleProgressPercent(username, moduleName){
+        let topics = modulesData[moduleName].topics;
+        if(topics.length===0) return 0;
+        let completed = topics.filter(t=>isTopicCompleted(username, moduleName, t.name)).length;
+        return Math.floor((completed/topics.length)*100);
+    }
+    function globalProgressPercent(username){
+        let totalTopics = 0;
+        let totalCompleted = 0;
+        for(let mod in modulesData){
+            let topics = modulesData[mod].topics;
+            totalTopics += topics.length;
+            let completed = topics.filter(t=>isTopicCompleted(username, mod, t.name)).length;
+            totalCompleted += completed;
+        }
+        return totalTopics===0 ? 0 : Math.floor((totalCompleted/totalTopics)*100);
+    }
+
+    // Рендер сол жақ модульдер
+    let currentModule = "Механика";
+    function renderModulesSidebar(){
+        const container = document.getElementById("modulesList");
+        if(!container) return;
+        let html = "";
+        for(let mod in modulesData){
+            let percent = moduleProgressPercent(currentUser.username, mod);
+            html += `<div class="module-item ${currentModule===mod ? 'active-module' : ''}" data-module="${mod}">
+                        <span class="module-name">${mod}</span>
+                        <span class="module-progress">${percent}%</span>
+                    </div>`;
+        }
+        container.innerHTML = html;
+        document.querySelectorAll(".module-item").forEach(el=>{
+            el.addEventListener("click", (e)=>{
+                let mod = el.getAttribute("data-module");
+                if(mod){
+                    currentModule = mod;
+                    renderModulesSidebar();
+                    renderTopics(currentModule);
+                    document.getElementById("moduleTitle").innerText = currentModule;
+                    document.getElementById("moduleDesc").innerText = modulesData[currentModule].desc;
+                }
+            });
+        });
+        let globalP = globalProgressPercent(currentUser.username);
+        document.getElementById("globalFill").style.width = globalP+"%";
+        document.getElementById("globalPercent").innerText = globalP+"%";
+    }
+
+    function renderTopics(moduleName){
+        const container = document.getElementById("topicsContainer");
+        let topics = modulesData[moduleName].topics;
+        let html = "";
+        topics.forEach((topic, idx)=>{
+            let completed = isTopicCompleted(currentUser.username, moduleName, topic.name);
+            let openId = `topicContent${idx}`;
+            html += `<div class="topic-card">
+                        <div class="topic-header" onclick="toggleTopic(${idx})">
+                            <span class="topic-title">📘 ${topic.name}</span>
+                            <input type="checkbox" class="complete-check" data-module="${moduleName}" data-topic="${topic.name}" ${completed ? 'checked' : ''}>
+                        </div>
+                        <div id="topicContent${idx}" class="topic-content">
+                            <p><strong>📖 Теория:</strong> ${topic.theory}</p>
+                            <div><strong>🧪 Формулалар:</strong><br> ${topic.formulas.map(f=>`<div class="formula-box">${f}</div>`).join('')}</div>
+                            <div class="test-quick">
+                                <small>Өзін-өзі тексеру: ${topic.name} бойынша негізгі формуланы жаздыңыз ба?</small><br>
+                                <button class="selfTestBtn" data-question="${topic.name}">Тез тест</button>
+                            </div>
+                        </div>
+                    </div>`;
+        });
+        container.innerHTML = html;
+        // checkbox оқиғалары
+        document.querySelectorAll(".complete-check").forEach(cb=>{
+            cb.addEventListener("change",(e)=>{
+                e.stopPropagation();
+                let module = cb.getAttribute("data-module");
+                let topic = cb.getAttribute("data-topic");
+                updateUserProgress(currentUser.username, module, topic, cb.checked);
+            });
+        });
+        // өзін-өзі тест батырмалары
+        document.querySelectorAll(".selfTestBtn").forEach(btn=>{
+            btn.addEventListener("click",()=>{
+                alert("✅ Өзіңізді тексеріңіз! Формуланы дәптерге жазып, есеп шығарыңыз. Келесі сабаққа дайын болыңыз.");
+            });
+        });
+    }
+    window.toggleTopic = function(idx){
+        let el = document.getElementById(`topicContent${idx}`);
+        if(el) el.classList.toggle("open");
+    };
+    // Формулалар галереясы
+    function renderFormulasGallery(){
+        let container = document.getElementById("allFormulasGrid");
+        let html = "";
+        allFormulasList.slice(0,12).forEach(f=>{
+            html += `<div class="formula-card"><strong>${f.module} / ${f.topic}</strong><div class="formula-box" style="margin-top:6px;">${f.formula}</div></div>`;
+        });
+        if(allFormulasList.length > 12) html += `<div class="formula-card">📚 + тағы ${allFormulasList.length-12} формула</div>`;
+        container.innerHTML = html;
+    }
+
+    // Калькулятор қарапайым
+    function initCalc(){
+        const btn = document.getElementById("calcBtn");
+        const input = document.getElementById("calcInput");
+        const resultDiv = document.getElementById("calcResult");
+        btn.onclick = () => {
+            try {
+                let res = eval(input.value);
+                resultDiv.innerHTML = `Нәтиже: ${res}`;
+            } catch(e){ resultDiv.innerHTML = "Қате өрнек";}
+        };
+    }
+    
+    // Аутентификация
+    function showAuthModal(show=true){
+        document.getElementById("authModal").style.display = show ? "flex" : "none";
+    }
+    let isLoginMode = true;
+    function setupAuth(){
+        const switchBtn = document.getElementById("switchToRegister");
+        const submitBtn = document.getElementById("authSubmitBtn");
+        const title = document.getElementById("authTitle");
+        switchBtn.onclick = () => {
+            isLoginMode = !isLoginMode;
+            title.innerText = isLoginMode ? "🔐 Кіру" : "📝 Тіркелу";
+            switchBtn.innerHTML = isLoginMode ? 'Аккаунтыңыз жоқ па? <span>Тіркелу</span>' : 'Аккаунтыңыз бар ма? <span>Кіру</span>';
+            document.getElementById("authMsg").innerText = "";
+        };
+        submitBtn.onclick = () => {
+            let username = document.getElementById("authUsername").value.trim();
+            let password = document.getElementById("authPassword").value.trim();
+            if(!username || !password){ document.getElementById("authMsg").innerText = "Толтырыңыз!"; return;}
+            if(isLoginMode){
+                let user = users.find(u=>u.username === username && u.password === password);
+                if(user){ currentUser = user; localStorage.setItem("physics_currentUser", username); showAuthModal(false); document.getElementById("mainApp").style.display = "block"; initAppAfterLogin();}
+                else document.getElementById("authMsg").innerText = "Қате логин немесе құпиясөз";
+            } else {
+                if(users.find(u=>u.username === username)){ document.getElementById("authMsg").innerText = "Бұл ат бар!"; return;}
+                let newUser = { username, password, progress: {} };
+                users.push(newUser);
+                saveUsers();
+                currentUser = newUser;
+                localStorage.setItem("physics_currentUser", username);
+                showAuthModal(false);
+                document.getElementById("mainApp").style.display = "block";
+                initAppAfterLogin();
+            }
+        };
+    }
+    function initAppAfterLogin(){
+        document.getElementById("currentUser").innerText = currentUser.username;
+        renderModulesSidebar();
+        renderTopics(currentModule);
+        renderFormulasGallery();
+        initCalc();
+        document.getElementById("moduleTitle").innerText = currentModule;
+        document.getElementById("moduleDesc").innerText = modulesData[currentModule].desc;
+        updateGlobalProgress();
+    }
+    function updateGlobalProgress(){
+        let gp = globalProgressPercent(currentUser.username);
+        document.getElementById("globalFill").style.width = gp+"%";
+        document.getElementById("globalPercent").innerText = gp+"%";
+    }
+    function logout(){
+        localStorage.removeItem("physics_currentUser");
+        currentUser = null;
+        document.getElementById("mainApp").style.display = "none";
+        showAuthModal(true);
+        document.getElementById("authUsername").value = "";
+        document.getElementById("authPassword").value = "";
+    }
+    // автожүктеу
+    let savedUser = localStorage.getItem("physics_currentUser");
+    if(savedUser){
+        let u = users.find(us=>us.username === savedUser);
+        if(u){ currentUser = u; document.getElementById("mainApp").style.display = "block"; showAuthModal(false); initAppAfterLogin();}
+        else { showAuthModal(true); document.getElementById("mainApp").style.display = "none";}
+    } else { showAuthModal(true); document.getElementById("mainApp").style.display = "none";}
+    document.getElementById("logoutBtn")?.addEventListener("click", logout);
+    setupAuth();
+    window.updateGlobalProgress = updateGlobalProgress;
+</script>
+</body>
+</html>
